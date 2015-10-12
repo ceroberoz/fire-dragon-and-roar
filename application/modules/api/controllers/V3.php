@@ -457,6 +457,51 @@ class V3 extends CI_Controller {
                      ->set_output(json_encode($data));
     }
 
+    function sortby_artist()
+    {
+        $auth_check = $this->api_auth();
+        $api_name   = "sortby_artist";
+
+        // get the code
+        $this->load->helper('array');
+        $error_check = element('code', $auth_check);
+
+        if($error_check == "202")
+        {
+            $code    ="202";
+            $message = "Accepted";
+
+            // do magics
+            $this->load->model('mvideokeapi_v2');
+            $datas = $this->mvideokeapi_v2->sortby_artist();
+
+            // data
+            $data = array(
+                'code'    => $code,
+                'name'    => $api_name,
+                'message' => $message,
+                'data'    => $datas
+                );
+        }
+        else
+        {
+            // return errors
+            $error_code     = element('code', $auth_check);
+            $error_message  = element('message', $auth_check);
+            $error_data     = element('data', $auth_check);
+
+            $data = array(
+                'code'    => $error_code,
+                'name'    => $api_name,
+                'message' => $error_message,
+                'data'    => $error_data
+                );
+        }
+
+        $this->output->set_content_type('application/json')
+                     ->set_output(json_encode($data));
+    }
+
     function get_artist_info()
     {
         $auth_check = $this->api_auth();
@@ -565,5 +610,7 @@ class V3 extends CI_Controller {
         $this->output->set_content_type('application/json')
                      ->set_output(json_encode($data));
     }
+
+    //function malam minggu
 
 }
