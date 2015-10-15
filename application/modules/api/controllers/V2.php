@@ -8,6 +8,14 @@ class V2 extends CI_Controller {
 		redirect('/');
 	}
 
+    function debug_post()
+    {
+        $data = $_POST;
+
+        $this->output->set_content_type('application/json')
+                     ->set_output(json_encode($data)); 
+    }
+
     // API V3 beta
     function get_channel_list()
     {
@@ -179,9 +187,13 @@ class V2 extends CI_Controller {
 
         // get vars
         $users_id    = $this->input->post('users_id');
-        $referral_c  = $this->input->post('referral_code');
+        $referral_code  = $this->input->post('referral_code');
 
-        if($device_id == "" OR $date_access == "" OR $access_code == "" OR $users_id == "" OR $referral_c = "")
+        // statics
+        $source     = "referral";
+        $topup_id   = "2"; // equals 10 pts, needs config in future
+
+        if($device_id == "" OR $date_access == "" OR $access_code == "")
         {
             $code    = "400";
             $message = "Bad Request";
@@ -202,14 +214,15 @@ class V2 extends CI_Controller {
             $this->load->model('mvideokeapi_v2');
 
             // topup both users          
-            $this->mvideokeapi_v2->do_referral_user($users_id,$referral_c);
-
+            $this->mvideokeapi_v2->do_referral_user($users_id,$source,$topup_id);
+            $this->mvideokeapi_v2->do_topup_referral($referral_code,$source,$topup_id);
+            
             // get users current balance (ion auth)
             $users_balance  = $this->ion_auth->user()->row()->balance;
 
-            //$datas   = "Success"; 
+            //$datas   = $referral_code; 
             //selamat balance kamu bertambah 10000,
-            $paket_ceban = "IDR 10.000";
+            $paket_ceban = "10 pts";
 
             $datas  = array(
                 'added_package' => $paket_ceban,

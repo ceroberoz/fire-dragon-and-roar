@@ -66,16 +66,11 @@ class Mvideokeapi_v2 extends CI_Model {
     }
 
     // API v2
-    function do_referral_user($users_id,$referral_c)
+    function do_referral_user($users_id,$source,$topup_id)
     {
-
         // do topup users        
         $uid        = $users_id;
         $transaction_code = substr(str_shuffle(MD5(microtime())), 0, 10); 
-
-        // statics
-        $source     = "referral";
-        $topup_id   = "2";
 
         $data = array(
             'topup_id'  => $topup_id,
@@ -86,81 +81,40 @@ class Mvideokeapi_v2 extends CI_Model {
 
         $this->db->insert('topup_transaction',$data);
 
-// tambah saldo user
+        // tambah saldo user
         $this->do_topup_users($uid,$topup_id);
 
-        // do topup referral
-        // get reffere's
+        // tambah saldo referral
+        //$this->do_topup_referral($referral_c,$source,$topup_id);
+    }
 
+    function do_topup_referral($referral_code,$source,$topup_id)
+    {
         $this->db->select('id')
                  ->from('users')
-                 ->where('users.referral',$referral_c);
+                 ->where('users.referral',$referral_code);
 
         $query = $this->db->get();
 
-        $uid2  = $query->row()->id;
+        $uid  = $query->row()->id;
 
-//	$uid = $uid2;
-        $transaction_code2 = substr(str_shuffle(MD5(microtime())), 0, 10);   
-// tambah saldo user
-        $this->do_topup_users($uid,$topup_id);
+        //  $uid = $uid2;
+        $transaction_code = substr(str_shuffle(MD5(microtime())), 0, 10);   
 
         $data = array(
+            
             'topup_id'  => $topup_id,
-            'users_id'  => $uid2,
-            'transaction_code' => $transaction_code2,
+            'users_id'  => $uid,
+            'transaction_code' => $transaction_code,
             'source'    => $source
             );
 
         $this->db->insert('topup_transaction',$data);
-// hotfix add referral
-        $this->do_topup_users2($uid2,$topup_id);   
 
- }
-function do_topup_users2($uid2,$topup_id)
-    {
-        $this->db->select('price')
-                 ->from('topup')
-                 ->where('topup.id',$topup_id);
+        // tambah saldo user
+        $this->do_topup_users($uid,$topup_id);
 
-        $query = $this->db->get();
-
-        if($query->num_rows() > 0)
-        {
-            //return $query->result();
-            // kalau ada hasil
-            $a = $query->row()->price;
-
-            $this->db->select('balance')
-                 ->from('users')
-                 ->where('users.id',$uid2);
-
-            $query2 = $this->db->get();
-
-            if($query2->num_rows() > 0)
-            {
-                //return $query->result();
-                // kalau ada hasil
-                $b = $query2->row()->balance;
-
-                $c = $b + $a;
-
-                $data = array(
-                    'balance'   => $c
-                    );
-
-                $this->db->where('users.id',$uid2)
-                         ->update('users',$data);
-            }
-            else
-            {
-                return array();
-            }
-        }
-        else
-        {
-            return array();
-        }
+        //return $data;
     }
 
     function get_topup_package()
@@ -259,15 +213,25 @@ function do_topup_users2($uid2,$topup_id)
             }
             else
             {
-                return array();
+                // add new balance
+                //return array();
+                $c = "10";
+
+                $data = array(
+                    'balance'   => $c
+                    );
+
+                $this->db->where('users.id',$uid)
+                         ->update('users',$data);
             }
         }
         else
         {
+            // no topup package
             return array();
         }
     }
-    
+
     function do_update_user_balance($uid,$new_balance)
     {
         $data = array(
