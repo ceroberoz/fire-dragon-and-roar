@@ -329,7 +329,15 @@ class Mvideokeapi_v2 extends CI_Model {
     // yellow area
     function get_topchart()
     {
-        $this->db->select('artists.cover_photo, artists.name as artist_name, video.title, video.is_karaoke, video.is_duet, favorites.is_favorite, video.id as video_id')
+        $this->db->select('
+            artists.cover_photo, 
+            artists.name as artist_name, 
+            video.title, 
+            video.is_karaoke, 
+            video.is_duet, 
+            video.cover_art,
+            favorites.is_favorite, 
+            video.id as video_id')
                  ->from('video')
                  ->join('video_topten','video_topten.video_id = video.id','left')
                  ->join('artists','artists.id = video.artists_id','left')
@@ -354,7 +362,17 @@ class Mvideokeapi_v2 extends CI_Model {
 
     function get_popular()
     {
-        $this->db->select('artists.cover_photo, artists.name as artist_name, video.title, video.is_karaoke, video.is_duet, favorites.is_favorite, video.id as video_id')
+        $this->db->select('
+            artists.cover_photo, 
+            artists.name as artist_name, 
+            video.title, video.is_karaoke, 
+            video.is_duet,
+            video.cover_art, 
+            favorites.is_favorite, 
+            video.id as video_id,
+            duration as video_duration,
+            label_id,
+            playcount')
                  ->from('video')
                  ->join('artists','artists.id = video.artists_id','left')
                  ->join('favorites','favorites.video_id = video.id','left')
@@ -378,7 +396,18 @@ class Mvideokeapi_v2 extends CI_Model {
     // red area
     function sortby_song()
     {
-        $this->db->select('artists.id as artists_id,artists.cover_photo, artists.name as artist_name, video.title, video.is_karaoke, video.is_duet, favorites.is_favorite, video.id as video_id')
+        $this->db->select('
+            artists.id as artists_id,
+            video.cover_art,
+            artists.name as artist_name,
+            video.title,
+            video.is_karaoke,
+            video.is_duet,
+            favorites.is_favorite,
+            video.id as video_id,
+            duration as video_duration,
+            label_id,
+            playcount')
                  ->from('video')
                  ->join('artists','artists.id = video.artists_id','left')
                  ->join('favorites','favorites.video_id = video.id','left')
@@ -400,7 +429,11 @@ class Mvideokeapi_v2 extends CI_Model {
 
     function sortby_artist()
     {
-        $this->db->select('artists.cover_photo, artists.name as artist_name, video.title, artists.id as artists_id')
+        $this->db->select('
+            artists.cover_photo, 
+            artists.name as artist_name, 
+            video.title, 
+            artists.id as artists_id')
                  ->from('video')
                  ->join('artists','artists.id = video.artists_id','left')
 		 ->where('video.is_karaoke','1')
@@ -421,7 +454,15 @@ class Mvideokeapi_v2 extends CI_Model {
 
     function get_artistvideo($artists_id)
     {
-        $this->db->select('artists.cover_photo, artists.name as artist_name, video.title, video.is_karaoke, video.is_duet, favorites.is_favorite, video.id as video_id')
+        $this->db->select('
+            video.cover_art, 
+            artists.name as artist_name, 
+            video.title, video.is_karaoke, 
+            video.is_duet, favorites.is_favorite, 
+            video.id as video_id,
+            duration as video_duration,
+            label_id,
+            playcount')
                  ->from('video')
                  ->join('artists','artists.id = video.artists_id','left')
                  ->join('favorites','favorites.video_id = video.id','left')
@@ -444,7 +485,16 @@ class Mvideokeapi_v2 extends CI_Model {
 
     function sortby_favorite($users_id)
     {
-        $this->db->select('artists.cover_photo, artists.name as artist_name, video.title, video.is_karaoke, video.is_duet, favorites.is_favorite, video.id as video_id')
+        $this->db->select('video.cover_art, 
+            artists.name as artist_name, 
+            video.title, 
+            video.is_karaoke, 
+            video.is_duet, 
+            favorites.is_favorite, 
+            video.id as video_id,
+            duration as video_duration,
+            label_id,
+            playcount')
                  ->from('video')
                  ->join('artists','artists.id = video.artists_id','left')
                  ->join('favorites','favorites.video_id = video.id','left')
@@ -468,7 +518,15 @@ class Mvideokeapi_v2 extends CI_Model {
 
     function sortby_newrelease()
     {
-        $this->db->select('artists.cover_photo, artists.name as artist_name, video.title, video.is_karaoke, video.is_duet, favorites.is_favorite, video.id as video_id')
+        $this->db->select('video.cover_art, 
+            artists.name as artist_name, 
+            video.title, video.is_karaoke, 
+            video.is_duet, 
+            favorites.is_favorite, 
+            video.id as video_id,
+            duration as video_duration,
+            label_id,
+            playcount')
                  ->from('video')
                  ->join('artists','artists.id = video.artists_id','left')
                  ->join('favorites','favorites.video_id = video.id','left')
@@ -490,7 +548,15 @@ class Mvideokeapi_v2 extends CI_Model {
 
     function sortby_popular()
     {
-        $this->db->select('artists.cover_photo, artists.name as artist_name, video.title, video.is_karaoke, video.is_duet, favorites.is_favorite, video.id as video_id')
+        $this->db->select('video.cover_art, 
+            artists.name as artist_name, 
+            video.title, video.is_karaoke, 
+            video.is_duet, 
+            favorites.is_favorite, 
+            video.id as video_id,
+            duration as video_duration,
+            label_id,
+            playcount')
                  ->from('video')
                  ->join('artists','artists.id = video.artists_id','left')
                  ->join('favorites','favorites.video_id = video.id','left')
@@ -543,7 +609,7 @@ class Mvideokeapi_v2 extends CI_Model {
             switch ($random_var) {
                 case "1":
                     // random by artist
-                    $this->db->select('artists.cover_photo, artists.name as artist_name, video.title, video.id as video_id')
+                    $this->db->select('video.cover_art, artists.name as artist_name, video.title, video.id as video_id')
                              ->from('video')
                              ->join('artists','artists.id = video.artists_id','left')
                              ->like('artists.name',$artist_name)
@@ -561,7 +627,7 @@ class Mvideokeapi_v2 extends CI_Model {
                     {
                         //return array();
                         // just randomize it.
-                        $this->db->select('artists.cover_photo, artists.name as artist_name, video.title, video.id as video_id')
+                        $this->db->select('video.cover_art, artists.name as artist_name, video.title, video.id as video_id')
                                  ->from('video')
                                  ->join('artists','artists.id = video.artists_id','left')
                                  ->join('genre','genre.id = video.genre_id','left')
@@ -584,16 +650,16 @@ class Mvideokeapi_v2 extends CI_Model {
                     break;
                 case "2":
                     // random by genre
-                    $this->db->select('artists.cover_photo, artists.name as artist_name, video.title, video.id as video_id')
+                    $this->db->select('video.cover_art, artists.name as artist_name, video.title, video.id as video_id')
                              ->from('video')
                              ->join('artists','artists.id = video.artists_id','left')
                              ->join('genre','genre.id = video.genre_id','left')
-         ->where('video.is_karaoke','1')                    
-	 ->like('genre.name',$genre)
+                             ->where('video.is_karaoke','1')                    
+                    	     ->like('genre.name',$genre)
                              ->order_by('artists.name',"random")
                              ->limit(2);
 
-                     $query = $this->db->get();
+                    $query = $this->db->get();
 
                     if($query->num_rows() > 0)
                     {
@@ -603,7 +669,7 @@ class Mvideokeapi_v2 extends CI_Model {
                     {
                         //return array();
                         // just randomize it.
-                        $this->db->select('artists.cover_photo, artists.name as artist_name, video.title, video.id as video_id')
+                        $this->db->select('video.cover_art, artists.name as artist_name, video.title, video.id as video_id')
                                  ->from('video')
                                  ->join('artists','artists.id = video.artists_id','left')
                                  ->join('genre','genre.id = video.genre_id','left')
@@ -626,12 +692,12 @@ class Mvideokeapi_v2 extends CI_Model {
                     break;
                 case "3":
                     // random by year
-                    $this->db->select('artists.cover_photo, artists.name as artist_name, video.title, video.id as video_id')
+                    $this->db->select('video.cover_art, artists.name as artist_name, video.title, video.id as video_id')
                              ->from('video')
                              ->join('artists','artists.id = video.artists_id','left')
                              ->join('genre','genre.id = video.genre_id','left')
                              ->where('video.date_add',$year)
-				->where('video.is_karaoke','1')
+				             ->where('video.is_karaoke','1')
                              ->order_by('artist.name',"random")
                              ->limit(2);
 
@@ -645,12 +711,12 @@ class Mvideokeapi_v2 extends CI_Model {
                     {
                         //return array();
                         // just randomize it.
-                        $this->db->select('artists.cover_photo, artists.name as artist_name, video.title, video.id as video_id')
+                        $this->db->select('video.cover_art, artists.name as artist_name, video.title, video.id as video_id')
                                  ->from('video')
                                  ->join('artists','artists.id = video.artists_id','left')
                                  ->join('genre','genre.id = video.genre_id','left')
-->where('video.is_karaoke','1')                                 
-->order_by('artist.name',"random")
+                                 ->where('video.is_karaoke','1')                                 
+                                 ->order_by('artist.name',"random")
                                  ->limit(2);
 
                         $query = $this->db->get();
@@ -667,11 +733,11 @@ class Mvideokeapi_v2 extends CI_Model {
                     break;
                 default:
                     // just randomize it.
-                    $this->db->select('artists.cover_photo, artists.name as artist_name, video.title, video.id as video_id')
+                    $this->db->select('video.cover_art, artists.name as artist_name, video.title, video.id as video_id')
                              ->from('video')
                              ->join('artists','artists.id = video.artists_id','left')
                              ->join('genre','genre.id = video.genre_id','left')
-				->where('video.is_karaoke','1')
+				             ->where('video.is_karaoke','1')
                              ->order_by('artist.name',"random")
                              ->limit(2);
 

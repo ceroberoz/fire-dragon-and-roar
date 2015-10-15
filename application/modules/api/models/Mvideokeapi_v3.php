@@ -117,4 +117,27 @@ class Mvideokeapi_v3 extends CI_Model {
         }
 	}
 
+	function update_user_profile($first_name,$last_name,$gender,$born_date,$uid)
+	{
+		$data = array(
+			'first_name' => $first_name,
+			'last_name'	 => $last_name,
+			'gender'	 => $gender,
+			'born_date'	 => $born_date
+			);
+
+		$this->db->where('id',$uid)
+				 ->update('users',$data);
+	}
+
+	function update_user_avatar($avatar,$uid)
+	{
+		$data = array(
+			'avatar' => $avatar
+			);
+
+		$this->db->where('id',$uid)
+				 ->update('users',$data);
+	}
+
 }

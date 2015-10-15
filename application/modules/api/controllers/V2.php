@@ -16,6 +16,117 @@ class V2 extends CI_Controller {
                      ->set_output(json_encode($data)); 
     }
 
+    // API update users
+    function update_user_profile()
+    {
+        $name   = "update_user_profile";
+
+        // auth
+        $device_id  = $this->input->post('device_id');
+        $date_access = $this->input->post('date_access');
+        $access_code  = $this->input->post('access_code');
+
+        $a = $device_id.$date_access;
+        $b = md5($a);
+        
+        
+        if($device_id == "" OR $date_access == "" OR $access_code == "")
+        {
+            $code    = "400";
+            $message = "Bad Request";
+            $datas   = "NULL";
+        }
+        elseif($b != $access_code)
+        {
+            $code    = "406";
+            $message = "Not Acceptable";
+            $datas   = "NULL";
+        }
+        else
+        {
+            $code    ="202";
+            $message = "Accepted";
+
+            // get vars
+            $first_name = $this->input->post('first_name');
+            $last_name  = $this->input->post('last_name');
+            $gender     = $this->input->post('gender');
+            $born_date  = $this->input->post('born_date');
+            $uid        = $this->input->post('users_id');
+
+            // do magics
+            $this->load->model('mvideokeapi_v3');
+            $this->mvideokeapi_v3->update_user_profile($first_name,$last_name,$gender,$born_date,$uid);
+
+            $datas = "NULL";
+
+        }
+
+        // data
+        $data = array(
+            'code'    => $code,
+            'name'    => $name,
+            'message' => $message,
+            'data'    => $datas
+            );
+        
+        $this->output->set_content_type('application/json')
+                     ->set_output(json_encode($data)); 
+    }
+
+    function update_user_avatar()
+    {
+        $name   = "update_user_avatar";
+
+        // auth
+        $device_id  = $this->input->post('device_id');
+        $date_access = $this->input->post('date_access');
+        $access_code  = $this->input->post('access_code');
+
+        $a = $device_id.$date_access;
+        $b = md5($a);
+        
+        
+        if($device_id == "" OR $date_access == "" OR $access_code == "")
+        {
+            $code    = "400";
+            $message = "Bad Request";
+            $datas   = "NULL";
+        }
+        elseif($b != $access_code)
+        {
+            $code    = "406";
+            $message = "Not Acceptable";
+            $datas   = "NULL";
+        }
+        else
+        {
+            //cek direktori user
+            if (!file_exists('path/to/directory'))
+            {
+                // kalau ga ada
+                mkdir('path/to/directory', 0777, true);
+            }
+            else
+            {
+                // kalau ada
+            }
+
+
+        }
+
+        // data
+        $data = array(
+            'code'    => $code,
+            'name'    => $name,
+            'message' => $message,
+            'data'    => $datas
+            );
+        
+        $this->output->set_content_type('application/json')
+                     ->set_output(json_encode($data)); 
+    }
+
     // API V3 beta
     function get_channel_list()
     {
@@ -1287,8 +1398,9 @@ class V2 extends CI_Controller {
                             $last_name  = $query2->row()->last_name;
                             $avatar     = $query2->row()->avatar;
                             $referral   = $query2->row()->referral;
-				$phone = $query2->row()->phone;
-$username      = $query2->row()->username;
+            				$phone = $query2->row()->phone;
+                            $username      = $query2->row()->username;
+                            $balance      = $query2->row()->balance;
 
                              //if the login is successful
                             $code    ="202";
@@ -1302,8 +1414,9 @@ $username      = $query2->row()->username;
                                 'last_name' => $last_name,
                                 'avatar'    => $avatar,
                                 'referral'  => $referral,
-				'phone' => $phone,
- 'username'  => $username
+                				'phone' => $phone,
+                                'username'  => $username,
+                                'balance'  => $balance
                                 );
                         }   
                         else
