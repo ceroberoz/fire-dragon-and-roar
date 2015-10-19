@@ -3,6 +3,16 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 class Mvideokeapi_v2 extends CI_Model {
 
+    function add_favorite($uid,$vid)
+    {
+        $data = array(
+            'users_id' => $uid,
+            'video_id' => $vid
+            );
+
+        $this->db->insert('users_favorites',$data);
+    }
+
     function get_channel_list()
     {
         $this->db->select('identifier as channels_id,name,cover')
@@ -333,7 +343,7 @@ class Mvideokeapi_v2 extends CI_Model {
             artists.cover_photo, 
             artists.name as artist_name, 
             video.title, 
-            video.is_karaoke, 
+            COALESCE(favorites.is_favorite, 0) AS is_favorite,
             video.is_duet, 
             video.cover_art,
             favorites.is_favorite, 
@@ -368,11 +378,11 @@ class Mvideokeapi_v2 extends CI_Model {
             video.title, video.is_karaoke, 
             video.is_duet,
             video.cover_art, 
-            favorites.is_favorite, 
+            COALESCE(favorites.is_favorite, 0) AS is_favorite, 
             video.id as video_id,
             duration as video_duration,
             label_id,
-            playcount')
+            playcount',false)
                  ->from('video')
                  ->join('artists','artists.id = video.artists_id','left')
                  ->join('favorites','favorites.video_id = video.id','left')
@@ -396,23 +406,23 @@ class Mvideokeapi_v2 extends CI_Model {
     // red area
     function sortby_song()
     {
-        $this->db->select('
+        $this->db->select("
             artists.id as artists_id,
             video.cover_art,
             artists.name as artist_name,
             video.title,
             video.is_karaoke,
-            video.is_duet,
-            favorites.is_favorite,
+            video.is_duet,            
+            COALESCE(favorites.is_favorite, '0') AS is_favorite,
             video.id as video_id,
             duration as video_duration,
             label_id,
-            playcount')
+            playcount")
                  ->from('video')
                  ->join('artists','artists.id = video.artists_id','left')
                  ->join('favorites','favorites.video_id = video.id','left')
                  ->join('users','users.id = favorites.users_id','left')
-		 ->where('video.is_karaoke','1')
+		         ->where('video.is_karaoke','1')
                  ->order_by('video.title','ASC');
 
         $query = $this->db->get();
@@ -430,6 +440,7 @@ class Mvideokeapi_v2 extends CI_Model {
     function sortby_artist()
     {
         $this->db->select('
+            label_id,
             artists.cover_photo, 
             artists.name as artist_name, 
             video.title, 
@@ -454,21 +465,22 @@ class Mvideokeapi_v2 extends CI_Model {
 
     function get_artistvideo($artists_id)
     {
-        $this->db->select('
+        $this->db->select("
             video.cover_art, 
             artists.name as artist_name, 
             video.title, video.is_karaoke, 
-            video.is_duet, favorites.is_favorite, 
+            video.is_duet,
+            COALESCE(favorites.is_favorite, '0') as is_favorite, 
             video.id as video_id,
             duration as video_duration,
             label_id,
-            playcount')
+            playcount")
                  ->from('video')
                  ->join('artists','artists.id = video.artists_id','left')
                  ->join('favorites','favorites.video_id = video.id','left')
                  ->join('users','users.id = favorites.users_id','left')
                  ->where('artists.id',$artists_id)
-		 ->where('video.is_karaoke','1')
+		         ->where('video.is_karaoke','1')
                  ->order_by('video.title','ASC');
 
         $query = $this->db->get();
@@ -485,16 +497,16 @@ class Mvideokeapi_v2 extends CI_Model {
 
     function sortby_favorite($users_id)
     {
-        $this->db->select('video.cover_art, 
+        $this->db->select("video.cover_art, 
             artists.name as artist_name, 
             video.title, 
             video.is_karaoke, 
             video.is_duet, 
-            favorites.is_favorite, 
+            COALESCE(favorites.is_favorite, '0') AS is_favorite, 
             video.id as video_id,
             duration as video_duration,
             label_id,
-            playcount')
+            playcount")
                  ->from('video')
                  ->join('artists','artists.id = video.artists_id','left')
                  ->join('favorites','favorites.video_id = video.id','left')
@@ -522,7 +534,7 @@ class Mvideokeapi_v2 extends CI_Model {
             artists.name as artist_name, 
             video.title, video.is_karaoke, 
             video.is_duet, 
-            favorites.is_favorite, 
+            COALESCE(favorites.is_favorite, 0) AS is_favorite, 
             video.id as video_id,
             duration as video_duration,
             label_id,
@@ -552,7 +564,7 @@ class Mvideokeapi_v2 extends CI_Model {
             artists.name as artist_name, 
             video.title, video.is_karaoke, 
             video.is_duet, 
-            favorites.is_favorite, 
+            COALESCE(favorites.is_favorite, 0) AS is_favorite,
             video.id as video_id,
             duration as video_duration,
             label_id,

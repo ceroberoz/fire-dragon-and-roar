@@ -16,6 +16,96 @@ class V2 extends CI_Controller {
                      ->set_output(json_encode($data)); 
     }
 
+    // API favorite
+
+    //
+    function users_favorites_check($uid,$vid)
+    {
+        $this->db->select('*')
+                 ->from('users_favorites')
+                 ->where('users_id',$uid)
+                 ->where('video_id',$vid);
+
+        $query = $this->db->get();
+
+        if($query->num_rows() > 0)
+        {
+            $is_valid = "1";
+            return $is_valid;
+        }
+        else
+        {
+            $is_valid = "0";
+            return $is_valid;
+        }
+    }
+
+    function add_favorite()
+    {
+        // api name
+        $name   = "add_favorite";
+
+        // auth
+        $device_id  = $this->input->post('device_id');
+        $date_access = $this->input->post('date_access');
+        $access_code  = $this->input->post('access_code');
+
+        $a = $device_id.$date_access;
+        $b = md5($a);
+        
+        // var
+        $uid = $this->input->post('users_id');
+        $vid = $this->input->post('video_id');
+
+        if($device_id == "" OR $date_access == "" OR $access_code == "")
+        {
+            $code    = "400";
+            $message = "Bad Request";
+            $datas   = "NULL";
+        }
+        elseif($b != $access_code)
+        {
+            $code    = "406";
+            $message = "Not Acceptable";
+            $datas   = "NULL";
+        }
+        else
+        {
+            $favorite_check = $this->users_favorites_check($uid,$vid);
+            // validate me
+            if($favorite_check == "1")
+            {
+                // kalau ada
+                $code    = "409";
+                $message = "Conflict";
+                $datas   = "You already favorite this video";
+            }
+            else
+            {
+                // kalau ga ada
+                $code    ="202";
+                $message = "Accepted";
+
+                // do magics
+                $this->load->model('mvideokeapi_v2');          
+                $this->mvideokeapi_v2->add_favorite($uid,$vid);
+
+                $datas   = "Success";  
+            }
+        }
+
+        // data
+        $data = array(
+            'code'    => $code,
+            'name'    => $name,
+            'message' => $message,
+            'data'    => $datas
+            );
+        
+        $this->output->set_content_type('application/json')
+                     ->set_output(json_encode($data));
+    }
+
     // API update users
     function update_user_profile()
     {
@@ -86,7 +176,10 @@ class V2 extends CI_Controller {
         $a = $device_id.$date_access;
         $b = md5($a);
         
-        
+        // vars
+        $uid    = $this->input->post('users_id');
+        $avatar = $this->input->post('avatar');
+
         if($device_id == "" OR $date_access == "" OR $access_code == "")
         {
             $code    = "400";
@@ -101,16 +194,121 @@ class V2 extends CI_Controller {
         }
         else
         {
-            //cek direktori user
-            if (!file_exists('path/to/directory'))
+            if (file_exists('./users/'.$uid.'/'))
             {
-                // kalau ga ada
-                mkdir('path/to/directory', 0777, true);
+                // user dir ada, upload aja kaks               
+
+                //cek direktori avatar
+                if (!file_exists('./users/'.$uid.'/avatar/'))
+                {
+                    // kalau ga ada
+                    mkdir('./users/'.$uid.'/avatar/', 0777, TRUE);
+
+                    // do upload
+                    $this->do_upload_avatar($uid,$avatar);
+                    
+                    // update user info
+                    $this->load->model('mvideokeapi_v3');
+                    $this->mvideokeapi_v3->update_user_avatar($avatar,$uid);
+
+                    // getreturn
+                    $user = $this->ion_auth->user()->row();
+
+                    $userinfo = array(
+                        'users_id' => $user->id,
+                        'avatar' => $user->avatar,
+                        );
+
+
+                    $code    ="202";
+                    $message = "Accepted";
+                    $datas   = $userinfo; 
+
+                    }
+                else
+                {
+                    // kalau ada
+                    // do upload
+                    $this->do_upload_avatar($uid,$avatar);
+
+                    // update user info
+                    $this->load->model('mvideokeapi_v3');
+                    $this->mvideokeapi_v3->update_user_avatar($avatar,$uid);
+
+                    // getreturn
+                    $user = $this->ion_auth->user()->row();
+
+                    $userinfo = array(
+                        'users_id' => $user->id,
+                        'avatar' => $user->avatar,
+                        );
+
+
+                    $code    ="202";
+                    $message = "Accepted";
+                    $datas   = $userinfo; 
+
+                }
             }
             else
             {
-                // kalau ada
+                // user dir ga ada, bikin dulu bray
+                mkdir('./users/'.$uid.'/', 0777, TRUE);
+
+                //cek direktori avatar
+                if (!file_exists('./users/'.$uid.'/avatar/'))
+                {
+                    // kalau ga ada
+                    mkdir('./users/'.$uid.'/avatar/', 0777, TRUE);
+
+                    // do upload
+                    $this->do_upload_avatar($uid,$avatar);
+                    
+                    // update user info
+                    $this->load->model('mvideokeapi_v3');
+                    $this->mvideokeapi_v3->update_user_avatar($avatar,$uid);
+
+                    // getreturn
+                    $user = $this->ion_auth->user()->row();
+
+                    $userinfo = array(
+                        'users_id' => $user->id,
+                        'avatar' => $user->avatar,
+                        );
+
+
+                    $code    ="202";
+                    $message = "Accepted";
+                    $datas   = $userinfo; 
+
+                    }
+                else
+                {
+                    // kalau ada
+                    // do upload
+                    $this->do_upload_avatar($uid,$avatar);
+
+                    // update user info
+                    $this->load->model('mvideokeapi_v3');
+                    $this->mvideokeapi_v3->update_user_avatar($avatar,$uid);
+
+                    // getreturn
+                    $user = $this->ion_auth->user()->row();
+
+                    $userinfo = array(
+                        'users_id' => $user->id,
+                        'avatar' => $user->avatar,
+                        );
+
+
+                    $code    ="202";
+                    $message = "Accepted";
+                    $datas   = $userinfo; 
+
+                }
             }
+
+            
 
 
         }
@@ -125,6 +323,19 @@ class V2 extends CI_Controller {
         
         $this->output->set_content_type('application/json')
                      ->set_output(json_encode($data)); 
+    }
+
+    // upload
+    function do_upload_avatar($uid,$avatar)
+    {
+        $config['upload_path']          = './users/'.$uid.'/avatar/';
+        $config['allowed_types']        = 'gif|jpg|png';
+        //$config['max_size']             = 100;
+        //$config['max_width']            = 1024;
+        //$config['max_height']           = 768;
+
+        $this->load->library('upload', $config);
+        $this->upload->do_upload($avatar);
     }
 
     // API V3 beta
@@ -1345,6 +1556,20 @@ class V2 extends CI_Controller {
         $password = $this->input->post('password');
         $email    = $this->input->post('email');
 
+        //$key = "playstation4joss";
+        //$swift = $this->input->post('password');//"DybvIybHAUaQBvZ6JzfTwHNBE8we8rR4sdFEth4QTSQ=";
+        //$identity = $this->input->post('username'); //"azisseno@icloud.com"; 
+
+        //if ( $swift && $identity )
+        //{
+        //    $password = $this->stripPadding($this->decrypt($swift, $key));
+        //}
+        //else
+        //{
+        //    $password = "";
+       // }
+
+
         if($device_id == "" OR $date_access == "" OR $access_code == "" OR $email == "" OR $password =="")
         {
             $code    = "400";
@@ -1384,7 +1609,7 @@ class V2 extends CI_Controller {
                     if ($this->ion_auth->login($email, $password, $remember))
                     {
                         //
-                        $this->db->select('id,phone,username,first_name,last_name,avatar,referral')
+                        $this->db->select('id,balance,phone,username,first_name,last_name,avatar,referral')
                              ->from('users')
                              ->where('email',$email)
                              ->limit(1);
@@ -1462,40 +1687,6 @@ class V2 extends CI_Controller {
         $this->output->set_content_type('application/json')
                      ->set_output(json_encode($data));	
 	}
-
-    function debug_login()
-    {
-        $name       = "debug_login";
-        $email      = "admin@admin.com";
-        $password   = "password";
-        $remember   = TRUE;
-                    //
-        if ($this->ion_auth->login($email, $password, $remember))
-        {
-            //if the login is successful
-            $code    ="202";
-            $message = "Accepted";
-            $datas   = "Success";
-        }
-        else
-        {
-            // if the login was un-successful
-            $code    ="401";
-            $message = "Unauthorized";
-            $datas   = "Incorrect email or password";    
-        }
-
-        $data = array(
-            'code'    => $code,
-            'name'    => $name,
-            'message' => $message,
-            'data'    => $datas
-            );
-        
-        $this->output->set_content_type('application/json')
-                     ->set_output(json_encode($data));  
-
-    }
 
 	function logout()
 	{
@@ -2172,4 +2363,44 @@ class V2 extends CI_Controller {
         $this->output->set_content_type('application/json')
                      ->set_output(json_encode($data));
     }
+
+    // Password encypt
+      function decrypt($ciphertext_base64, $key)
+      {
+      //$this->load->model('webapi');
+      $ciphertext = base64_decode($ciphertext_base64);
+
+      $ivSize = mcrypt_get_iv_size(MCRYPT_RIJNDAEL_128, MCRYPT_MODE_CBC);
+      if (strlen($ciphertext) < $ivSize) {
+      throw new Exception('Missing initialization vector');
+      }
+
+      $iv = substr($ciphertext, 0, $ivSize);
+      $ciphertext = substr($ciphertext, $ivSize);
+
+      $plaintext = mcrypt_decrypt(MCRYPT_RIJNDAEL_128, $key, $ciphertext, MCRYPT_MODE_CBC, $iv);
+      //return $plaintext;
+     //echo "decrypy berhasil dipanggil";
+
+      return rtrim($plaintext, "\0");
+      }
+          
+          
+      function stripPadding($value)
+      {
+      //$this->load->model('webapi');
+        $pad = ord($value[($len = strlen($value)) - 1]);
+               // echo "stripPadding berhasil dipanggil";
+
+         return $this->paddingIsValid($pad, $value) ? substr($value, 0, $len - $pad) : $value;
+      }
+
+      function paddingIsValid($pad, $value)
+      {
+      $this->load->model('webapi');
+          $beforePad = strlen($value) - $pad;
+              //  echo "paddingIsValid berhasil dipanggil";
+
+          return substr($value, $beforePad) == str_repeat(substr($value, -1), $pad);
+      }
 }

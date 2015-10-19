@@ -611,7 +611,4 @@ class V3 extends CI_Controller {
                      ->set_output(json_encode($data));
     }
 
-    // users function
-    
-
 }
