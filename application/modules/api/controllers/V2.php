@@ -10,10 +10,133 @@ class V2 extends CI_Controller {
 
     function debug_post()
     {
-        $data = $_POST;
+        $referral_code = $this->input->post('referral_code');
+
+        $a = $this->db->where('referral_code',$referral_code)
+                          ->from('referral')
+                          ->count_all_results();
+
+        if($a <= 10)
+        {
+            $data = array('msg' => 'ok');
+        }
+        else
+        {
+            $data = array('msg' => 'not ok');
+        }
+
+        //$data = $_POST;
 
         $this->output->set_content_type('application/json')
                      ->set_output(json_encode($data)); 
+    }
+
+    // API newsfeeds
+    function add_newsfeeds()
+    {
+        // api name
+        $name   = "add_newsfeeds";
+
+        // auth
+        $device_id  = $this->input->post('device_id');
+        $date_access = $this->input->post('date_access');
+        $access_code  = $this->input->post('access_code');
+
+        $a = $device_id.$date_access;
+        $b = md5($a);
+        
+        // var
+        $uid        = $this->input->post('users_id');
+        $vid        = $this->input->post('video_id');
+        $post_type  = $this->input->post('post_type'); // karaoke / duet / feed
+        $comment    = $this->input->post('comment');
+        $duet_image = $this->input->post('duet_image');
+
+        if($device_id == "" OR $date_access == "" OR $access_code == "")
+        {
+            $code    = "400";
+            $message = "Bad Request";
+            $datas   = "NULL";
+        }
+        elseif($b != $access_code)
+        {
+            $code    = "406";
+            $message = "Not Acceptable";
+            $datas   = "NULL";
+        }
+        else
+        {
+            $code    ="202";
+            $message = "Accepted";
+
+            $this->load->model('mvideokeapi_v2');
+            $this->add_newsfeeds($uid,$vid,$post_type,$comment,$duet_image);
+
+            $datas = "Success";
+        }
+
+        // data
+        $data = array(
+            'code'    => $code,
+            'name'    => $name,
+            'message' => $message,
+            'data'    => $datas
+            );
+        
+        $this->output->set_content_type('application/json')
+                     ->set_output(json_encode($data));
+    }
+
+    function get_newsfeeds()
+    {
+        // api name
+        $name   = "get_newsfeeds";
+
+        // auth
+        $device_id  = $this->input->post('device_id');
+        $date_access = $this->input->post('date_access');
+        $access_code  = $this->input->post('access_code');
+
+        $a = $device_id.$date_access;
+        $b = md5($a);
+        
+
+        // get users
+
+        if($device_id == "" OR $date_access == "" OR $access_code == "")
+        {
+            $code    = "400";
+            $message = "Bad Request";
+            $datas   = "NULL";
+        }
+        elseif($b != $access_code)
+        {
+            $code    = "406";
+            $message = "Not Acceptable";
+            $datas   = "NULL";
+        }
+        else
+        {
+            $code    ="202";
+            $message = "Accepted";
+
+            // do magics
+            $this->load->model('mvideokeapi_v2');          
+            $datas = $this->mvideokeapi_v2->get_newsfeeds();
+
+            //$datas   = "Success";   
+        }
+
+        // data
+        $data = array(
+            'code'    => $code,
+            'name'    => $name,
+            'message' => $message,
+            'data'    => $datas
+            );
+        
+        $this->output->set_content_type('application/json')
+                     ->set_output(json_encode($data));
     }
 
     // API favorite
@@ -22,7 +145,7 @@ class V2 extends CI_Controller {
     function users_favorites_check($uid,$vid)
     {
         $this->db->select('*')
-                 ->from('users_favorites')
+                 ->from('favorites')
                  ->where('users_id',$uid)
                  ->where('video_id',$vid);
 
@@ -92,6 +215,60 @@ class V2 extends CI_Controller {
 
                 $datas   = "Success";  
             }
+        }
+
+        // data
+        $data = array(
+            'code'    => $code,
+            'name'    => $name,
+            'message' => $message,
+            'data'    => $datas
+            );
+        
+        $this->output->set_content_type('application/json')
+                     ->set_output(json_encode($data));
+    }
+
+    function delete_favorite()
+    {
+        // api name
+        $name   = "delete_favorite";
+
+        // auth
+        $device_id  = $this->input->post('device_id');
+        $date_access = $this->input->post('date_access');
+        $access_code  = $this->input->post('access_code');
+
+        $a = $device_id.$date_access;
+        $b = md5($a);
+        
+
+        // get vars
+        $uid    = $this->input->post('users_id');
+        $vid = $this->input->post('video_id');
+
+        if($device_id == "" OR $date_access == "" OR $access_code == "")
+        {
+            $code    = "400";
+            $message = "Bad Request";
+            $datas   = "NULL";
+        }
+        elseif($b != $access_code)
+        {
+            $code    = "406";
+            $message = "Not Acceptable";
+            $datas   = "NULL";
+        }
+        else
+        {
+            $code    ="202";
+            $message = "Accepted";
+
+            // do magics
+            $this->load->model('mvideokeapi_v2');          
+            $this->mvideokeapi_v2->delete_favorite($uid,$vid);
+
+            $datas   = "Success";   
         }
 
         // data
@@ -307,10 +484,6 @@ class V2 extends CI_Controller {
 
                 }
             }
-
-            
-
-
         }
 
         // data
@@ -327,7 +500,11 @@ class V2 extends CI_Controller {
 
     // upload
     function do_upload_avatar($uid,$avatar)
+    //function do_upload_avatar()
     {
+        //$uid = "1";
+        //$avatar = $this->input->post('avatar');
+
         $config['upload_path']          = './users/'.$uid.'/avatar/';
         $config['allowed_types']        = 'gif|jpg|png';
         //$config['max_size']             = 100;
@@ -335,7 +512,7 @@ class V2 extends CI_Controller {
         //$config['max_height']           = 768;
 
         $this->load->library('upload', $config);
-        $this->upload->do_upload($avatar);
+        $this->upload->do_upload('avatar');
     }
 
     // API V3 beta
@@ -529,27 +706,86 @@ class V2 extends CI_Controller {
         }
         else
         {
-            $code    ="202";
-            $message = "Accepted";
+            // cek kode sendiri apa bukan
+            $this->db->select('*')
+                     ->from('users')
+                     ->where('id',$users_id)
+                     ->where('referral',$referral_code);
 
-            // do magics
-            $this->load->model('mvideokeapi_v2');
+            $query = $this->db->get();
 
-            // topup both users          
-            $this->mvideokeapi_v2->do_referral_user($users_id,$source,$topup_id);
-            $this->mvideokeapi_v2->do_topup_referral($referral_code,$source,$topup_id);
-            
-            // get users current balance (ion auth)
-            $users_balance  = $this->ion_auth->user()->row()->balance;
+            if($query->num_rows() > 0) 
+            //if($this->mvideokeapi_v2->check_referral_code($users_id,$referral_code) == 1)
+            {
+                $code    = "401";
+                $message = "Unauthorized";
+                $datas   = "You cannot use your own referral code";
+            }
+            else
+            {
+                // kalau bukan
+                // cek udah 10 apa belum
 
-            //$datas   = $referral_code; 
-            //selamat balance kamu bertambah 10000,
-            $paket_ceban = "10 pts";
+                $aa = $this->db->where('referral_code',$referral_code)
+                          ->from('referral')
+                          ->count_all_results();
 
-            $datas  = array(
-                'added_package' => $paket_ceban,
-                'users_balance' => $users_balance
-                );
+                if($aa <= 10)
+                {
+                    // ok
+                    // cek kode udah pernah dipakai apa belum
+                    $this->db->select('*')
+                             ->from('referral')
+                             ->where('users_id',$users_id)
+                             ->where('referral_code',$referral_code);
+
+                    $query2 = $this->db->get();
+
+                    if($query2->num_rows() > 0)
+                    //if($this->mvideokeapi_v2->check_linked_referral($users_id,$referral_code) == 1)
+                    {
+                        // udah kepake masgan
+                        $code    = "403";
+                        $message = "Forbidden";
+                        $datas   = "Code Expired";
+                    }
+                    else
+                    {
+                        // kode valid 
+                        $code    ="202";
+                        $message = "Accepted";
+                        
+                        // do magics
+                        $this->load->model('mvideokeapi_v2');   
+
+                        // topup both users          
+                        $this->mvideokeapi_v2->do_referral_user($users_id,$source,$topup_id);
+                        $this->mvideokeapi_v2->do_topup_referral($referral_code,$source,$topup_id);
+
+                        // record referral
+                        $this->mvideokeapi_v2->log_referral($users_id,$referral_code);
+                        
+                        // get users current balance (ion auth)
+                        $users_balance  = $this->ion_auth->user()->row()->balance;
+
+                        //$datas   = $referral_code; 
+                        //selamat balance kamu bertambah 10000,
+                        $paket_ceban = "10 pts";
+
+                        $datas  = array(
+                            'added_package' => $paket_ceban,
+                            'users_balance' => $users_balance
+                            );
+                    }
+                }
+                else
+                {
+                    // not ok
+                    $code    = "403";
+                    $message = "Forbidden";
+                    $datas   = "Code Expired";
+                }
+            }
         }
 
         // data
@@ -1627,10 +1863,51 @@ class V2 extends CI_Controller {
                             $username      = $query2->row()->username;
                             $balance      = $query2->row()->balance;
 
-                             //if the login is successful
+                            //if the login is successful
                             $code    ="202";
                             $message = "Accepted";
                             //$datas   = "Success";
+
+                            // get latest package
+                            $this->db->select('package_transaction.date_valid, package.name as package_name,package.include_duet')
+                                     ->from('package_transaction')
+                                     ->join('package','package.id = package_transaction.package_id','LEFT')
+                                     ->where('users_id',$uid)
+                                     ->order_by('date_valid','ASC')
+                                     ->limit(1);
+
+                            $query3 = $this->db->get();
+
+                            if($query3->num_rows() > 0)
+                            {
+                                // define fun                                
+                                $check_date     = $query3->row()->date_valid;
+                                $current_date   = date('Y-m-d');
+                                if($check_date <= $current_date)
+                                {
+                                    // invalid
+                                    $package_name   = "";
+                                    $include_duet   = "";
+                                    $date_valid     = "";
+                                }
+                                else
+                                {
+                                    // masih ada paket gan
+                                    $package_name   = $query3->row()->package_name;
+                                    $include_duet   = $query3->row()->include_duet;
+                                    $date_valid     = $check_date;
+                                    
+                                }
+                            }
+                            else
+                            {
+                                // invalid
+                                $package_name   = "";
+                                $include_duet   = "";
+                                $date_valid     = "";
+                            }
+                            
+
 
                             $datas   = array(
                                 'uid'       => $uid,
@@ -1641,7 +1918,10 @@ class V2 extends CI_Controller {
                                 'referral'  => $referral,
                 				'phone' => $phone,
                                 'username'  => $username,
-                                'balance'  => $balance
+                                'balance'  => $balance,
+                                'package_name' => $package_name,
+                                'include_duet' => $include_duet,
+                                'date_valid'    => $date_valid
                                 );
                         }   
                         else
@@ -1843,10 +2123,10 @@ class V2 extends CI_Controller {
     // debugging API (night)
     // red area
 
-    function sortby_song()
+    function get_users_favorites()
     {
         // api name
-        $name   = "sortby_song";
+        $name   = "get_users_favorites";
 
         // auth
         $device_id  = $this->input->post('device_id');
@@ -1855,6 +2135,10 @@ class V2 extends CI_Controller {
 
         $a = $device_id.$date_access;
         $b = md5($a);
+
+        //vars
+
+        $uid = $this->input->post('users_id');
         
 
         if($device_id == "" OR $date_access == "" OR $access_code == "")
@@ -1876,8 +2160,60 @@ class V2 extends CI_Controller {
 
             // do magics
             $this->load->model('mvideokeapi_v2');          
-            $datas = $this->mvideokeapi_v2->sortby_song();
+            $datas = $this->mvideokeapi_v2->get_users_favorites($uid);
+            //$datas   = "Success";   
+        }
 
+        // data
+        $data = array(
+            'code'    => $code,
+            'name'    => $name,
+            'message' => $message,
+            'data'    => $datas
+            );
+        
+        $this->output->set_content_type('application/json')
+                     ->set_output(json_encode($data));
+    }
+
+    function sortby_song()
+    {
+        // api name
+        $name   = "sortby_song";
+
+        // auth
+        $device_id  = $this->input->post('device_id');
+        $date_access = $this->input->post('date_access');
+        $access_code  = $this->input->post('access_code');
+
+        $a = $device_id.$date_access;
+        $b = md5($a);
+
+        //vars
+
+        $uid = $this->input->post('users_id');
+        
+
+        if($device_id == "" OR $date_access == "" OR $access_code == "")
+        {
+            $code    = "400";
+            $message = "Bad Request";
+            $datas   = "NULL";
+        }
+        elseif($b != $access_code)
+        {
+            $code    = "406";
+            $message = "Not Acceptable";
+            $datas   = "NULL";
+        }
+        else
+        {
+            $code    ="202";
+            $message = "Accepted";
+
+            // do magics
+            $this->load->model('mvideokeapi_v2');          
+            $datas = $this->mvideokeapi_v2->sortby_song($uid);
             //$datas   = "Success";   
         }
 
@@ -1958,6 +2294,7 @@ class V2 extends CI_Controller {
 
         // vars
         $artists_id = $this->input->post('artists_id');
+        $uid = $this->input->post('users_id');
 
         if($device_id == "" OR $date_access == "" OR $access_code == "" OR $artists_id =="")
         {
