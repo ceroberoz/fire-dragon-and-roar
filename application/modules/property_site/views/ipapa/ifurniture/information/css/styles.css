@@ -1,0 +1,6 @@
+* {margin:0; padding:0;}
+body {color:#000; font-family: 'LatoRegular', Verdana, Geneva, sans-serif;font-size: 11px;}
+h4 { margin: 10px 0 0 -15px;}
+ul li ul {margin-left:20px;}
+li { margin-bottom: 3px;}
+#no-shipping-rate-info {margin: 10px; padding-left: 20px; font-size: 11px; color: #000;}
